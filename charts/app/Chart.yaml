@@ -2,7 +2,7 @@ apiVersion: v2
 name: app
 description: Opinionated chart for stateless HTTP services, secure and highly available by default.
 type: application
-version: 1.0.0
+version: 1.0.1
 appVersion: "1.0.0"
 kubeVersion: ">=1.30.0-0"
 keywords:
@@ -11,6 +11,7 @@ keywords:
   - gateway-api
   - keda
 home: https://github.com/lbarrosby/helm-charts
+icon: https://raw.githubusercontent.com/cncf/artwork/main/projects/helm/icon/color/helm-icon-color.svg
 sources:
   - https://github.com/lbarrosby/helm-charts/tree/main/charts/app
 maintainers:
