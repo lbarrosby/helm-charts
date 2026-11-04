@@ -5,6 +5,32 @@ entries:
       artifacthub.io/license: Apache-2.0
     apiVersion: v2
     appVersion: 1.0.0
+    created: "2026-11-04T05:39:05.195607827Z"
+    description: Opinionated chart for stateless HTTP services, secure and highly
+      available by default.
+    digest: 5b0c8f1ebc42d1840283f36684ac8368d547ec97eacfdffe1cab915aca07fa5f
+    home: https://github.com/lbarrosby/helm-charts
+    icon: https://raw.githubusercontent.com/cncf/artwork/main/projects/helm/icon/color/helm-icon-color.svg
+    keywords:
+    - deployment
+    - microservice
+    - gateway-api
+    - keda
+    kubeVersion: '>=1.30.0-0'
+    maintainers:
+    - name: Lucas Barros
+      url: https://github.com/lbarrosby
+    name: app
+    sources:
+    - https://github.com/lbarrosby/helm-charts/tree/main/charts/app
+    type: application
+    urls:
+    - https://github.com/lbarrosby/helm-charts/releases/download/app-1.0.1/app-1.0.1.tgz
+    version: 1.0.1
+  - annotations:
+      artifacthub.io/license: Apache-2.0
+    apiVersion: v2
+    appVersion: 1.0.0
     created: "2026-11-04T05:13:39.998218059Z"
     description: Opinionated chart for stateless HTTP services, secure and highly
       available by default.
@@ -26,4 +52,4 @@ entries:
     urls:
     - https://github.com/lbarrosby/helm-charts/releases/download/app-1.0.0/app-1.0.0.tgz
     version: 1.0.0
-generated: "2026-11-04T05:13:39.998247324Z"
+generated: "2026-11-04T05:39:05.195614277Z"
