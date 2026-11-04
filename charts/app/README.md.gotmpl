@@ -1,0 +1,66 @@
+{{ template "chart.header" . }}
+
+{{ template "chart.versionBadge" . }}{{ template "chart.typeBadge" . }}{{ template "chart.appVersionBadge" . }}
+
+{{ template "chart.description" . }}
+
+The defaults are the ones a platform team would sign off for production: non-root with a read-only filesystem, every capability dropped, no API token mounted, pods spread across zones and nodes, a PodDisruptionBudget, a preStop delay so the load balancer drains before the process stops, and a rollout that never goes below the desired replica count.
+
+## Install
+
+```console
+helm repo add lbarrosby https://lbarrosby.github.io/helm-charts
+helm upgrade --install my-api lbarrosby/app \
+  --set image.repository=ghcr.io/acme/my-api \
+  --set image.tag=1.4.2
+```
+
+## Common setups
+
+Expose through the Gateway API and autoscale on CPU and memory:
+
+```yaml
+httpRoute:
+  enabled: true
+  parentRefs:
+    - name: public
+      namespace: gateway-system
+      sectionName: https
+  hostnames: [api.acme.com]
+autoscaling:
+  enabled: true
+  maxReplicas: 20
+  targetMemoryUtilizationPercentage: 80
+```
+
+Scale on a Prometheus query with KEDA and lock down the network:
+
+```yaml
+keda:
+  enabled: true
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring:9090
+        query: sum(rate(http_requests_total{service="my-api"}[1m]))
+        threshold: "50"
+networkPolicy:
+  enabled: true
+  ingressFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway-system
+```
+
+## Guard rails
+
+The chart fails fast instead of rendering something that will misbehave in the cluster:
+
+- `autoscaling` and `keda` cannot be enabled together, since KEDA manages its own HPA.
+- `keda.enabled` needs at least one trigger.
+- `podDisruptionBudget` takes either `minAvailable` or `maxUnavailable`.
+- `values.schema.json` rejects missing resource requests, invalid ports and malformed digests.
+
+{{ template "chart.requirementsSection" . }}
+
+{{ template "chart.valuesSection" . }}
