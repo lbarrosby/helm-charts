@@ -1,0 +1,61 @@
+suite: deployment
+templates:
+  - deployment.yaml
+  - configmap.yaml
+  - secret.yaml
+tests:
+  - it: is secure by default
+    template: deployment.yaml
+    asserts:
+      - equal:
+          path: spec.template.spec.securityContext.runAsNonRoot
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.readOnlyRootFilesystem
+          value: true
+      - equal:
+          path: spec.template.spec.containers[0].securityContext.capabilities.drop
+          value: [ALL]
+      - equal:
+          path: spec.template.spec.automountServiceAccountToken
+          value: false
+  - it: spreads pods across zones and nodes
+    template: deployment.yaml
+    asserts:
+      - lengthEqual:
+          path: spec.template.spec.topologySpreadConstraints
+          count: 2
+      - equal:
+          path: spec.template.spec.topologySpreadConstraints[0].topologyKey
+          value: topology.kubernetes.io/zone
+  - it: drops replicas when an autoscaler owns them
+    template: deployment.yaml
+    set:
+      autoscaling.enabled: true
+    asserts:
+      - notExists:
+          path: spec.replicas
+  - it: pins the image by digest when set
+    template: deployment.yaml
+    set:
+      image.digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
+    asserts:
+      - matchRegex:
+          path: spec.template.spec.containers[0].image
+          pattern: "@sha256:0{64}$"
+  - it: rolls pods when config changes
+    template: deployment.yaml
+    set:
+      config:
+        LOG_LEVEL: debug
+    asserts:
+      - exists:
+          path: spec.template.metadata.annotations["checksum/config"]
+  - it: refuses HPA and KEDA together
+    template: deployment.yaml
+    set:
+      autoscaling.enabled: true
+      keda.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "autoscaling.enabled and keda.enabled are mutually exclusive: KEDA manages its own HPA"

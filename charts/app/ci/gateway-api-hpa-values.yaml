@@ -1,0 +1,11 @@
+autoscaling:
+  enabled: true
+  targetMemoryUtilizationPercentage: 80
+httpRoute:
+  enabled: true
+config:
+  LOG_LEVEL: info
+secretEnv:
+  API_TOKEN: dummy
+serviceMonitor:
+  enabled: true

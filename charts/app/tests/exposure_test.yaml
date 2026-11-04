@@ -1,0 +1,48 @@
+suite: exposure and scaling
+templates:
+  - httproute.yaml
+  - scaledobject.yaml
+  - pdb.yaml
+  - networkpolicy.yaml
+tests:
+  - it: routes every path to the service by default
+    template: httproute.yaml
+    set:
+      httpRoute.enabled: true
+    asserts:
+      - equal:
+          path: spec.rules[0].backendRefs[0].port
+          value: 80
+      - equal:
+          path: spec.parentRefs[0].sectionName
+          value: https
+  - it: requires KEDA triggers
+    template: scaledobject.yaml
+    set:
+      keda.enabled: true
+    asserts:
+      - failedTemplate:
+          errorMessage: "keda.enabled requires at least one entry in keda.triggers"
+  - it: keeps a PDB with maxUnavailable 1
+    template: pdb.yaml
+    asserts:
+      - equal:
+          path: spec.maxUnavailable
+          value: 1
+      - equal:
+          path: spec.unhealthyPodEvictionPolicy
+          value: AlwaysAllow
+  - it: always allows DNS when egress is restricted
+    template: networkpolicy.yaml
+    set:
+      networkPolicy.enabled: true
+      networkPolicy.egressTo:
+        - ipBlock:
+            cidr: 10.0.0.0/8
+    asserts:
+      - contains:
+          path: spec.policyTypes
+          content: Egress
+      - equal:
+          path: spec.egress[0].ports[0].port
+          value: 53

@@ -1,0 +1,26 @@
+keda:
+  enabled: true
+  triggers:
+    - type: prometheus
+      metadata:
+        serverAddress: http://prometheus.monitoring:9090
+        query: sum(rate(http_requests_total{app="app"}[1m]))
+        threshold: "50"
+networkPolicy:
+  enabled: true
+  ingressFrom:
+    - namespaceSelector:
+        matchLabels:
+          kubernetes.io/metadata.name: gateway-system
+  egressTo:
+    - ipBlock:
+        cidr: 10.0.0.0/8
+ingress:
+  enabled: true
+  className: nginx
+  tls:
+    - secretName: app-tls
+      hosts:
+        - app.example.com
+image:
+  digest: sha256:0000000000000000000000000000000000000000000000000000000000000000
