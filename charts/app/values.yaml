@@ -1,0 +1,232 @@
+# -- Overrides the chart name used in resource names and labels.
+nameOverride: ""
+# -- Overrides the fully qualified resource name.
+fullnameOverride: ""
+
+image:
+  # -- Container image repository.
+  repository: ghcr.io/stefanprodan/podinfo
+  # -- Image tag. Defaults to the chart appVersion.
+  tag: ""
+  # -- Image digest. When set it takes precedence over the tag.
+  digest: ""
+  # -- Image pull policy.
+  pullPolicy: IfNotPresent
+
+# -- Secrets used to pull the image.
+imagePullSecrets: []
+
+# -- Number of replicas when no autoscaler is enabled.
+replicaCount: 2
+
+# -- Revisions kept for rollback.
+revisionHistoryLimit: 5
+
+strategy:
+  type: RollingUpdate
+  rollingUpdate:
+    maxSurge: 25%
+    maxUnavailable: 0
+
+# -- Extra labels added to every resource.
+commonLabels: {}
+# -- Extra annotations added to the pods.
+podAnnotations: {}
+# -- Extra labels added to the pods.
+podLabels: {}
+
+serviceAccount:
+  # -- Create a dedicated ServiceAccount.
+  create: true
+  # -- Name of the ServiceAccount. Generated when empty.
+  name: ""
+  # -- Annotations, for example eks.amazonaws.com/role-arn for IRSA.
+  annotations: {}
+  # -- Mount the API token only when the workload talks to the API server.
+  automountServiceAccountToken: false
+
+# -- Pod level security context.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  runAsGroup: 10001
+  fsGroup: 10001
+  seccompProfile:
+    type: RuntimeDefault
+
+# -- Container level security context.
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- Named container ports. The first one is the default target of the Service.
+ports:
+  - name: http
+    containerPort: 9898
+    protocol: TCP
+
+service:
+  # -- Create a Service.
+  enabled: true
+  # -- Service type.
+  type: ClusterIP
+  # -- Service port.
+  port: 80
+  # -- Container port name the Service targets.
+  targetPort: http
+  # -- Service annotations.
+  annotations: {}
+
+# -- CPU and memory. Requests are required so the scheduler and the autoscaler work.
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    memory: 256Mi
+
+probes:
+  startup:
+    enabled: true
+    httpGet:
+      path: /healthz
+      port: http
+    periodSeconds: 5
+    failureThreshold: 30
+  liveness:
+    enabled: true
+    httpGet:
+      path: /healthz
+      port: http
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    httpGet:
+      path: /readyz
+      port: http
+    periodSeconds: 5
+    failureThreshold: 3
+
+# -- Extra environment variables.
+env: []
+# -- Environment from ConfigMaps or Secrets.
+envFrom: []
+
+# -- Key/value pairs rendered into a ConfigMap and loaded as environment variables.
+config: {}
+# -- Key/value pairs rendered into a Secret and loaded as environment variables. Prefer an external secret manager in production.
+secretEnv: {}
+
+# -- Writable emptyDir mounted at /tmp, needed with a read-only root filesystem.
+tmpVolume:
+  enabled: true
+  sizeLimit: 64Mi
+
+# -- Extra volumes.
+extraVolumes: []
+# -- Extra volume mounts for the main container.
+extraVolumeMounts: []
+# -- Init containers.
+initContainers: []
+# -- Sidecar containers.
+sidecars: []
+
+# -- Seconds to wait before SIGKILL. Keep it above the preStop sleep.
+terminationGracePeriodSeconds: 30
+lifecycle:
+  # -- Sleep before shutdown so load balancers stop sending traffic first.
+  preStopSleepSeconds: 5
+
+# -- Node selector.
+nodeSelector: {}
+# -- Tolerations.
+tolerations: []
+# -- Affinity rules.
+affinity: {}
+# -- Priority class name.
+priorityClassName: ""
+
+topologySpread:
+  # -- Spread pods across zones and nodes.
+  enabled: true
+  # -- ScheduleAnyway keeps the rollout going when a zone is short on capacity.
+  whenUnsatisfiable: ScheduleAnyway
+  maxSkew: 1
+
+podDisruptionBudget:
+  # -- Create a PodDisruptionBudget.
+  enabled: true
+  # -- Minimum available pods. Ignored when maxUnavailable is set.
+  minAvailable: ""
+  # -- Maximum unavailable pods.
+  maxUnavailable: 1
+
+autoscaling:
+  # -- Enable a HorizontalPodAutoscaler. Mutually exclusive with keda.enabled.
+  enabled: false
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  # -- Target memory utilization. Disabled when empty.
+  targetMemoryUtilizationPercentage: ""
+  # -- Scaling behavior.
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+
+keda:
+  # -- Enable a KEDA ScaledObject. Mutually exclusive with autoscaling.enabled.
+  enabled: false
+  minReplicaCount: 2
+  maxReplicaCount: 20
+  pollingInterval: 30
+  cooldownPeriod: 300
+  # -- KEDA triggers, passed as is.
+  triggers: []
+
+ingress:
+  # -- Create an Ingress.
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts:
+    - host: app.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+
+httpRoute:
+  # -- Create a Gateway API HTTPRoute.
+  enabled: false
+  annotations: {}
+  # -- Gateways this route attaches to.
+  parentRefs:
+    - name: public
+      namespace: gateway-system
+      sectionName: https
+  hostnames:
+    - app.example.com
+  # -- Route rules. When empty a single rule sends every path to the Service.
+  rules: []
+
+networkPolicy:
+  # -- Create a NetworkPolicy that only allows the listed sources.
+  enabled: false
+  # -- Allowed ingress sources, as NetworkPolicyPeer entries.
+  ingressFrom: []
+  # -- Allow egress only to these destinations plus DNS. Leave empty to allow all egress.
+  egressTo: []
+
+serviceMonitor:
+  # -- Create a Prometheus Operator ServiceMonitor.
+  enabled: false
+  path: /metrics
+  port: http
+  interval: 30s
+  scrapeTimeout: 10s
+  labels: {}

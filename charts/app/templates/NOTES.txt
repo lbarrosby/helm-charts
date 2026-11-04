@@ -1,0 +1,13 @@
+{{ include "app.fullname" . }} {{ .Values.image.tag | default .Chart.AppVersion }} deployed to {{ .Release.Namespace }}.
+
+{{- if .Values.httpRoute.enabled }}
+Exposed through the Gateway API on: {{ join ", " .Values.httpRoute.hostnames }}
+{{- else if .Values.ingress.enabled }}
+Exposed through the Ingress on: {{ range .Values.ingress.hosts }}{{ .host }} {{ end }}
+{{- else }}
+Not exposed outside the cluster. To reach it locally:
+  kubectl -n {{ .Release.Namespace }} port-forward svc/{{ include "app.fullname" . }} 8080:{{ .Values.service.port }}
+{{- end }}
+
+Rollout status:
+  kubectl -n {{ .Release.Namespace }} rollout status deploy/{{ include "app.fullname" . }}
