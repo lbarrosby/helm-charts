@@ -1,0 +1,7 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended", ":semanticCommits"],
+  "packageRules": [
+    {"matchManagers": ["github-actions"], "groupName": "github actions", "pinDigests": true}
+  ]
+}
